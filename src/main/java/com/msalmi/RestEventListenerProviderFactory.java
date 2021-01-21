@@ -78,7 +78,7 @@ public class RestEventListenerProviderFactory implements EventListenerProviderFa
 
 		return finalItems;
 	}
-	
+
 	private HttpClient getHttpClient() {
 		return HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 	}
