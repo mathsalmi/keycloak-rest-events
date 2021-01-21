@@ -14,23 +14,20 @@ import org.keycloak.models.KeycloakSessionFactory;
 
 public class RestEventListenerProviderFactory implements EventListenerProviderFactory {
 
-	private String urlEvents = "";
-	private String urlAdminEvents = "";
-	private Set<EventType> ignoredEvents = Collections.emptySet();
-	private Set<OperationType> ignoredOperations = Collections.emptySet();
-
 	@Override
 	public EventListenerProvider create(KeycloakSession keycloakSession) {
-		var httpClient = HttpClient.newHttpClient();
+		var urlEvents = System.getenv("REST_EVENT_LISTENER_URL_EVENTS");
+		var urlAdminEvents = System.getenv("REST_EVENT_LISTENER_URL_ADMIN_EVENTS");
+		var ignoredEvents = transformStringToEventType(System.getenv("REST_EVENT_LISTENER_IGNORED_EVENTS"));
+		var ignoredOperations = transformStringToOperationType(System.getenv("REST_EVENT_LISTENER_IGNORED_OPERATIONS"));
+
+		var httpClient = getHttpClient();
 		return new RestEventListenerProvider(urlEvents, urlAdminEvents, ignoredEvents, ignoredOperations, httpClient);
 	}
 
 	@Override
 	public void init(Config.Scope scope) {
-		this.urlEvents = scope.get("urlEvents");
-		this.urlAdminEvents = scope.get("urlAdminEvents");
-		this.ignoredEvents = transformStringToEventType(scope.getArray("ignoredEvents"));
-		this.ignoredOperations = transformStringToOperationType(scope.getArray("ignoredOperations"));
+
 	}
 
 	@Override
@@ -48,9 +45,14 @@ public class RestEventListenerProviderFactory implements EventListenerProviderFa
 		return "keycloak-rest-events";
 	}
 
-	private Set<EventType> transformStringToEventType(String[] items) {
+	private Set<EventType> transformStringToEventType(String itemsChunk) {
 		final Set<EventType> finalItems = Collections.emptySet();
 
+		if (itemsChunk == null || itemsChunk.isBlank()) {
+			return finalItems;
+		}
+
+		final var items = itemsChunk.split(",");
 		if (items != null && items.length > 0) {
 			for (final var item : items) {
 				finalItems.add(EventType.valueOf(item));
@@ -60,9 +62,14 @@ public class RestEventListenerProviderFactory implements EventListenerProviderFa
 		return finalItems;
 	}
 
-	private Set<OperationType> transformStringToOperationType(String[] items) {
+	private Set<OperationType> transformStringToOperationType(String itemsChunk) {
 		final Set<OperationType> finalItems = Collections.emptySet();
 
+		if (itemsChunk == null || itemsChunk.isBlank()) {
+			return finalItems;
+		}
+
+		final var items = itemsChunk.split(",");
 		if (items != null && items.length > 0) {
 			for (final var item : items) {
 				finalItems.add(OperationType.valueOf(item));
@@ -70,5 +77,9 @@ public class RestEventListenerProviderFactory implements EventListenerProviderFa
 		}
 
 		return finalItems;
+	}
+	
+	private HttpClient getHttpClient() {
+		return HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
 	}
 }
