@@ -87,6 +87,6 @@ public class RestEventListenerProvider implements EventListenerProvider {
 				.build();
 		// @formatter:on
 
-		httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+		httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 	}
 }
